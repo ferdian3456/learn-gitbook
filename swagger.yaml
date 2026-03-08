@@ -23,11 +23,37 @@ info:
   title: Virdan API
   version: "1.0"
 paths:
-  /auth/register:
+  /auth/login:
     post:
       consumes:
       - application/json
-      description: file(docs/flows/login.md)
+      description: |-
+        ## Login Flow
+
+        ### Business Logic
+        1. Validasi request payload (email & password wajib diisi)
+        2. Cek apakah email terdaftar di database — return `404` kalau tidak ditemukan
+        3. Verifikasi password dengan bcrypt compare — return `401` kalau tidak cocok
+        4. Cek status akun user — return `403` kalau akun suspended/banned
+        5. Generate JWT access token & refresh token
+        6. Simpan refresh token ke Redis dengan TTL
+        7. Return access token & refresh token ke client
+
+        ### Edge Cases
+        - Email tidak terdaftar → `404 Not Found`
+        - Password salah → `401 Unauthorized`
+        - Akun suspended → `403 Forbidden`
+        - Rate limit exceeded (terlalu banyak percobaan login) → `429 Too Many Requests`
+        - Redis down → login tetap bisa, tapi refresh token tidak disimpan
+
+        ### Flow
+        ```
+        Request → Validate Payload → Check Email → Verify Password → Check Account Status → Generate JWT → Store Refresh Token (Redis) → Response
+        ```
+
+        ### Token Info
+        - **Access Token** — short-lived (15 menit), dipakai untuk autentikasi request
+        - **Refresh Token** — long-lived (7 hari), dipakai untuk generate access token baru
       parameters:
       - description: Payload
         in: body
