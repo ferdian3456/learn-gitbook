@@ -26,9 +26,8 @@ paths:
         - Kalau stok berkurang saat proses → return `409 Conflict`
 
         ### Flow
-```
         Request → StockService → OrderService → PaymentQueue → Response
-```
+        
       requestBody:
         required: true
         content:
